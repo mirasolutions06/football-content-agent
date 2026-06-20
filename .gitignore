@@ -1,0 +1,24 @@
+# Secrets - never commit. scripts/mandem/_env.py reads the process environment,
+# an optional server env file via MANDEM_ENV_FILE, and local ./.env for dev.
+.env
+*.env
+!.env.example
+
+# Instagram file-backed token (written 0600 by scripts/mandem/instagram.py)
+.ig/
+ig_token*
+
+# Local SQLite scratch
+*.sqlite
+*.sqlite-*
+.mandem-data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# OS / editor / local tooling
+.DS_Store
+.claude/
