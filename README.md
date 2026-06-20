@@ -22,6 +22,18 @@ Example approved posts are published at
 sanitized and does not include live deployment details, credentials, or private
 operator state.
 
+## Model And Tool Stack
+
+- Agent interface: FastMCP stdio server with 35 tools, 3 resources, and 2 prompts.
+- Agent brain: model-agnostic MCP tool layer, designed to run behind any
+  MCP-capable agent runtime.
+- Image stylization: fal.ai ByteDance Seedream v4 edit with aura-sr upscaling.
+- Overlay and vision checks: Gemini 2.5 Flash by default, configurable via env.
+- Generated fallback images: OpenAI `gpt-image-2`, with provider keys split from
+  the agent brain so image generation can keep working during model swaps.
+- Core integrations: Telegram Bot API, API-Football, RSS feeds, Reddit JSON,
+  Wikimedia Commons, Brave image search, Pexels, Cloudflare R2, Instagram Graph API.
+
 ## What It Proves
 
 - Agent tool design with 35 FastMCP tools, 3 resources, and 2 prompts.
