@@ -1,14 +1,20 @@
-# Mandem FC Agent
+# Football Content Agent
 
-Self-hosted football social-media agent with Telegram approval, FastMCP tools,
-SQLite state, async image stylization jobs, identity checks, fallbacks, and 67
-passing tests.
+A live, deployed AI agent that runs a football social-media brand end-to-end:
+it watches fixtures and news, drafts opinionated posts with match graphics, and
+publishes only after a human approves each draft over Telegram. 35 FastMCP
+tools, SQLite state, async image jobs, identity checks, deterministic fallbacks,
+and 67 passing tests.
 
-Mandem watches football fixtures and news, drafts opinionated social posts,
-finds or generates visual assets, sends drafts to an operator over Telegram, and
-only publishes after approval. The interesting part is not "generate a caption";
-it is the operating system around that caption: event polling, ranking, state,
-approval, async jobs, image safety checks, deterministic fallbacks, and recovery.
+It is the production case study for the
+[ai-social-content-agent](https://github.com/mirasolutions06/ai-social-content-agent)
+engine: the same approval-gated, human-in-the-loop core, specialized for football
+(fixtures, lineups, player imagery, match-day timing). The engine repo is the
+reusable version; this repo shows it running for real.
+
+The work is not "generate a caption"; it is the operating system around that
+caption: event polling, ranking, state, approval, async jobs, image safety
+checks, deterministic fallbacks, and recovery.
 
 ## Demo
 
@@ -21,6 +27,29 @@ Example approved posts are published at
 [@mandemfchq](https://www.instagram.com/mandemfchq/). The GitHub repo is
 sanitized and does not include live deployment details, credentials, or private
 operator state.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Cron["Cron or operator request"] --> MCP["FastMCP server"]
+    Telegram["Telegram approval chat"] --> MCP
+    MCP --> Football["API-Football"]
+    MCP --> RSS["RSS + Reddit news"]
+    MCP --> DB[("SQLite state")]
+    MCP --> Images["Image source ladder"]
+    Images --> Vision["Relevance + identity checks"]
+    Vision --> Draft["Draft row + Telegram preview"]
+    Draft --> Approval{"yes / edit / skip"}
+    Approval -->|yes| Job["Async stylize job"]
+    Approval -->|edit| Draft
+    Approval -->|skip| DB
+    Job --> Queue["Queue dir: image, caption, meta"]
+    Queue --> Publish["Optional Instagram publish"]
+```
+
+A human approves every draft before anything publishes. See
+[ARCHITECTURE.md](ARCHITECTURE.md) for the full component breakdown.
 
 ## Model And Tool Stack
 
@@ -96,3 +125,9 @@ This repo is a sanitized proof repo. It intentionally excludes private workspace
 memory, historical handoff docs, live hostnames, IPs, chat IDs, secrets, and
 deployment-specific paths. Keep real credentials in `.env` locally or in a server
 environment file outside git.
+
+## Contact
+
+Built and operated by Mira Solutions, an AI engineering and automation studio.
+
+mira.solutions06@gmail.com
