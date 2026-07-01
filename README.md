@@ -1,130 +1,89 @@
+<div align="center">
+
 # Football Content Agent
 
-A live, deployed AI agent that runs a football social-media brand end-to-end:
+**A football content brand that runs itself, end to end, with a human on the
+publish button.** Live in production as [@mandemfchq](https://www.instagram.com/mandemfchq/):
 it watches fixtures and news, drafts opinionated posts with match graphics, and
-publishes only after a human approves each draft over Telegram. 35 FastMCP
-tools, SQLite state, async image jobs, identity checks, deterministic fallbacks,
-and 67 passing tests.
+publishes only after approval over Telegram.
 
-It is the production case study for the
+[![CI](https://github.com/mirasolutions06/football-content-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/mirasolutions06/football-content-agent/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)
+![MCP tools](https://img.shields.io/badge/MCP%20tools-35-8A2BE2.svg)
+![Tests](https://img.shields.io/badge/tests-67-brightgreen.svg)
+[![Live](https://img.shields.io/badge/live-%40mandemfchq-E4405F.svg)](https://www.instagram.com/mandemfchq/)
+
+<img src="docs/images/posts.png" alt="Approved, published posts from the @mandemfchq account" width="820">
+
+[Architecture](ARCHITECTURE.md) · [Runbook](RUNBOOK.md) · [The engine it runs on](https://github.com/mirasolutions06/ai-social-content-agent)
+
+</div>
+
+## Why this exists
+
+This is the **production proof** for the
 [ai-social-content-agent](https://github.com/mirasolutions06/ai-social-content-agent)
 engine: the same approval-gated, human-in-the-loop core, specialized for football
-(fixtures, lineups, player imagery, match-day timing). The engine repo is the
-reusable version; this repo shows it running for real.
+and running live for a real audience. The engine repo is the reusable version;
+this repo shows it holding up in the wild.
 
-The work is not "generate a caption"; it is the operating system around that
-caption: event polling, ranking, state, approval, async jobs, image safety
-checks, deterministic fallbacks, and recovery.
+The interesting part is not "generate a caption." It is the operating system
+around that caption: event polling, ranking, state, an approval gate, async media
+jobs, image safety checks, deterministic fallbacks, and recovery when a provider
+fails or live data goes missing.
 
-## Demo
+## What it proves
 
-Screen recording coming soon: draft creation, Telegram approval, async
-stylization, and the final queued post.
+| | |
+|---|---|
+| **Runs live** | Deployed and posting as [@mandemfchq](https://www.instagram.com/mandemfchq/). |
+| **35 MCP tools** | Fixtures, news ranking, image sourcing, drafts, approval, stylization, publishing. |
+| **Human-in-the-loop** | Every draft is approved over Telegram before it can publish. |
+| **Safe imagery** | An image-source ladder (official photos, news, Wikimedia, Pexels, generation) with identity and relevance checks. |
+| **Fails gracefully** | Deterministic Pillow composites when providers fail or mutate an image. |
+| **Real coverage** | 67 passing tests, run in CI. |
 
-## Live Output
-
-Example approved posts are published at
-[@mandemfchq](https://www.instagram.com/mandemfchq/). The GitHub repo is
-sanitized and does not include live deployment details, credentials, or private
-operator state.
-
-## Architecture
+## How it works
 
 ```mermaid
 flowchart TD
-    Cron["Cron or operator request"] --> MCP["FastMCP server"]
+    Cron["Cron or operator"] --> MCP["FastMCP server (35 tools)"]
     Telegram["Telegram approval chat"] --> MCP
-    MCP --> Football["API-Football"]
-    MCP --> RSS["RSS + Reddit news"]
+    MCP --> Football["API-Football + news"]
     MCP --> DB[("SQLite state")]
     MCP --> Images["Image source ladder"]
     Images --> Vision["Relevance + identity checks"]
-    Vision --> Draft["Draft row + Telegram preview"]
-    Draft --> Approval{"yes / edit / skip"}
+    Vision --> Draft["Draft + Telegram preview"]
+    Draft --> Approval{"Human: yes / edit / skip"}
     Approval -->|yes| Job["Async stylize job"]
-    Approval -->|edit| Draft
     Approval -->|skip| DB
-    Job --> Queue["Queue dir: image, caption, meta"]
-    Queue --> Publish["Optional Instagram publish"]
+    Job --> Publish["Optional Instagram publish"]
 ```
 
-A human approves every draft before anything publishes. See
-[ARCHITECTURE.md](ARCHITECTURE.md) for the full component breakdown.
+Full detail in [ARCHITECTURE.md](ARCHITECTURE.md). The generic, reusable engine
+behind this lives in
+[ai-social-content-agent](https://github.com/mirasolutions06/ai-social-content-agent).
 
-## Model And Tool Stack
-
-- Agent interface: FastMCP stdio server with 35 tools, 3 resources, and 2 prompts.
-- Deployed agent brain: GPT-5.5. The MCP tool layer is model-swappable and
-  can run behind any MCP-capable agent runtime.
-- Image stylization: fal.ai ByteDance Seedream v4 edit with aura-sr upscaling.
-- Overlay and vision checks: Gemini 2.5 Flash by default, configurable via env.
-- Generated fallback images: OpenAI `gpt-image-2`, with provider keys split from
-  the agent brain so image generation can keep working during model swaps.
-- Core integrations: Telegram Bot API, API-Football, RSS feeds, Reddit JSON,
-  Wikimedia Commons, Brave image search, Pexels, Cloudflare R2, Instagram Graph API.
-
-## What It Proves
-
-- Agent tool design with 35 FastMCP tools, 3 resources, and 2 prompts.
-- SQLite-backed state for fixtures, drafts, news, Telegram messages, and jobs.
-- Human-in-the-loop approval via Telegram before anything is published.
-- Async stylization jobs so long image calls do not block MCP RPCs.
-- Image-source ladder: official player photos, news search, Wikimedia, Pexels,
-  generated images, and deterministic Pillow composites.
-- Identity and relevance checks before using AI-edited player imagery.
-- Practical fallback behavior when APIs fail, images mutate, or live data is missing.
-- Reproducible public test suite: `make test`.
-
-## Quick Start
+## Quick start
 
 ```bash
-python3 -m venv .venv
-. .venv/bin/activate
+python3 -m venv .venv && . .venv/bin/activate
 make install
-make test
+make test          # 67 tests, no live secrets needed
 cp .env.example .env
 make db-init
 ```
 
-To run the MCP server locally:
+## Built with
 
-```bash
-MANDEM_DATA_DIR="$PWD/.mandem-data" python3 scripts/mandem_mcp.py
-```
+Python · [MCP](https://modelcontextprotocol.io) (FastMCP) · SQLite · API-Football ·
+Telegram Bot API · Instagram Graph API · fal.ai / OpenAI image models.
 
-Real provider calls require environment variables in `.env` or a server env file
-referenced by `MANDEM_ENV_FILE`. Tests do not require live secrets.
+## Public-safe notes
 
-## Repository Layout
-
-```text
-.
-├── scripts/
-│   ├── mandem_mcp.py        # FastMCP stdio server
-│   ├── mandem_db.py         # SQLite schema/query/cleanup helper
-│   ├── smoke.py             # Environment and feed smoke checks
-│   ├── mandem/              # Agent modules
-│   └── tests/               # 67 tests
-├── ARCHITECTURE.md
-├── RUNBOOK.md
-├── FAILURE_MODES.md
-├── Makefile
-├── requirements.txt
-└── .github/workflows/ci.yml
-```
-
-## Docs
-
-- [ARCHITECTURE.md](ARCHITECTURE.md) explains the pipeline and system boundaries.
-- [RUNBOOK.md](RUNBOOK.md) covers local setup, server wiring, and useful commands.
-- [FAILURE_MODES.md](FAILURE_MODES.md) lists known failure modes and mitigations.
-
-## Public-Safe Notes
-
-This repo is a sanitized proof repo. It intentionally excludes private workspace
-memory, historical handoff docs, live hostnames, IPs, chat IDs, secrets, and
-deployment-specific paths. Keep real credentials in `.env` locally or in a server
-environment file outside git.
+A sanitized proof repo. It excludes private workspace memory, live hostnames, IPs,
+chat IDs, secrets, and deployment-specific paths. Keep real credentials in `.env`
+locally or in a server env file outside git.
 
 ## Contact
 
